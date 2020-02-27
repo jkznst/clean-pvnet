@@ -26,6 +26,7 @@ The structure of this project is described in [project_structure.md](project_str
     pip install torch==1.1.0 -f https://download.pytorch.org/whl/cu90/stable
 
     pip install Cython==0.28.2
+    sudo apt-get install libglfw3-dev libglfw3
     pip install -r requirements.txt
     ```
 2. Compile cuda extensions under `lib/csrc`:
@@ -37,6 +38,8 @@ The structure of this project is described in [project_structure.md](project_str
     python setup.py build_ext --inplace
     cd ../ransac_voting
     python setup.py build_ext --inplace
+    cd ../nn
+    python setup.py build_ext --inplace
     cd ../fps
     python setup.py
     ```
@@ -47,6 +50,11 @@ The structure of this project is described in [project_structure.md](project_str
     ln -s /path/to/linemod linemod
     ln -s /path/to/linemod_orig linemod_orig
     ln -s /path/to/occlusion_linemod occlusion_linemod
+
+    # the following is used for tless
+    ln -s /path/to/tless tless
+    ln -s /path/to/cache cache
+    ln -s /path/to/SUN2012pascalformat sun
     ```
 
 Download datasets which are formatted for this project:
@@ -54,9 +62,13 @@ Download datasets which are formatted for this project:
 2. [linemod_orig](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/EaoGIPguY3FAgrFKKhi32fcB_nrMcNRm8jVCZQd7G_-Wbg?e=ig4aHk): The dataset includes the depth for each image.
 3. [occlusion linemod](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/ESXrP0zskd5IvvuvG3TXD-4BMgbDrHZ_bevurBrAcKE5Dg?e=r0EgoA)
 4. [truncation linemod](https://1drv.ms/u/s!AtZjYZ01QjphfuDICdni1IIM4SE): Check [TRUNCATION_LINEMOD.md](TRUNCATION_LINEMOD.md) for the information about the Truncation LINEMOD dataset.
-
+5. [Tless](https://zjueducn-my.sharepoint.com/:f:/g/personal/pengsida_zju_edu_cn/EsKEY3aHNElEjaKbhCJVyQgBUGTlprdcyF5sgLjEv8J8TQ?e=NbJpkM): `cat tlessa* | tar xvf - -C .`.
+6. [Tless cache data](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/EWf-M5HRcH1JnBNN9yE1a84BYNAU7x1DoU_-W3Onl5Xxog?e=HZSrMu): It is used for training and testing on Tless.
+7. [SUN2012pascalformat](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012pascalformat.tar.gz)
 
 ## Testing
+
+### Testing on Linemod
 
 We provide the pretrained models of objects on Linemod, which can be found at [here](https://1drv.ms/f/s!AtZjYZ01QjphgQBQDQghxjbkik5f).
 
@@ -75,8 +87,18 @@ python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset Linem
 4. Test with icp:
 ```
 python run.py --type evaluate --cfg_file configs/linemod.yaml model cat test.icp True
-python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat test.icp
+python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat test.icp True
 ```
+
+### Testing on Tless
+
+We provide the pretrained models of objects on Tless, which can be found at [here](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/EbcvcBH-eFJDm7lFqillf_oB8Afr2d6vtELNn0tUUk439g?e=bNZaDc).
+
+1. Download the pretrained models and put them to `$ROOT/data/model/pvnet/`.
+2. Test:
+    ```
+    python run.py --type evaluate --cfg_file configs/tless/tless_01.yaml
+    ```
 
 ## Visualization
 
@@ -98,7 +120,7 @@ If setup correctly, the output will look like
 
 ## Training
 
-### Training
+### Training on Linemod
 
 1. Prepare the data related to `cat`:
     ```
@@ -110,6 +132,13 @@ If setup correctly, the output will look like
     ```
 
 The training parameters can be found in [project_structure.md](project_structure.md).
+
+### Training on Tless
+
+Train:
+```
+python train_net.py --cfg_file configs/tless/tless_01.yaml
+```
 
 ### Tensorboard
 
