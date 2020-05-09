@@ -41,7 +41,14 @@ The structure of this project is described in [project_structure.md](project_str
     cd ../nn
     python setup.py build_ext --inplace
     cd ../fps
-    python setup.py
+    python setup.py build_ext --inplace
+
+    # If you want to use the uncertainty-driven PnP
+    cd ../uncertainty_pnp
+    sudo apt-get install libgoogle-glog-dev
+    sudo apt-get install libsuitesparse-dev
+    sudo apt-get install libatlas-base-dev
+    python setup.py build_ext --inplace
     ```
 3. Set up datasets:
     ```
@@ -80,15 +87,21 @@ Take the testing on `cat` as an example.
     ```
 2. Download the pretrained model of `cat` and put it to `$ROOT/data/model/pvnet/cat/199.pth`.
 3. Test:
-```
-python run.py --type evaluate --cfg_file configs/linemod.yaml model cat
-python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat
-```
+    ```
+    python run.py --type evaluate --cfg_file configs/linemod.yaml model cat cls_type cat
+    python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat cls_type cat
+    ```
 4. Test with icp:
-```
-python run.py --type evaluate --cfg_file configs/linemod.yaml model cat test.icp True
-python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat test.icp True
-```
+    ```
+    python run.py --type evaluate --cfg_file configs/linemod.yaml model cat cls_type cat test.icp True
+    python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat cls_type cat test.icp True
+    ```
+5. Test with the uncertainty-driven PnP:
+    ```
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib/csrc/uncertainty_pnp/lib
+    python run.py --type evaluate --cfg_file configs/linemod.yaml model cat cls_type cat test.un_pnp True
+    python run.py --type evaluate --cfg_file configs/linemod.yaml test.dataset LinemodOccTest model cat cls_type cat test.un_pnp True
+    ```
 
 ### Testing on Tless
 
@@ -98,9 +111,13 @@ We provide the pretrained models of objects on Tless, which can be found at [her
 2. Test:
     ```
     python run.py --type evaluate --cfg_file configs/tless/tless_01.yaml
+    # or
+    python run.py --type evaluate --cfg_file configs/tless/tless_01.yaml test.vsd True
     ```
 
 ## Visualization
+
+### Visualization on Linemod
 
 Take the `cat` as an example.
 
@@ -110,13 +127,22 @@ Take the `cat` as an example.
     ```
 2. Download the pretrained model of `cat` and put it to `$ROOT/data/model/pvnet/cat/199.pth`.
 3. Visualize:
-```
-python run.py --type visualize --cfg_file configs/linemod.yaml model cat
-```
+    ```
+    python run.py --type visualize --cfg_file configs/linemod.yaml model cat cls_type cat
+    ```
 
 If setup correctly, the output will look like
 
 ![cat](./assets/cat.png)
+
+### Visualization on Tless
+
+Visualize:
+```
+python run.py --type visualize --cfg_file configs/tless/tless_01.yaml
+# or
+python run.py --type visualize --cfg_file configs/tless/tless_01.yaml test.det_gt True
+```
 
 ## Training
 
@@ -153,12 +179,15 @@ If setup correctly, the output will look like
 
 ## Training on the custom object
 
+An example dataset can be downloaded at [here](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/Ec6Hd9j7z4lCiwDhqIwDcScBGPw2rsbn6FJh1C2FwbPJTw?e=xcKGAw).
+
 1. Create a dataset using https://github.com/F2Wang/ObjectDatasetTools
 2. Organize the dataset as the following structure:
     ```
     ├── /path/to/dataset
     │   ├── model.ply
     │   ├── camera.txt
+    │   ├── diameter.txt  // the object diameter, whose unit is meter
     │   ├── rgb/
     │   │   ├── 0.jpg
     │   │   ├── ...
@@ -170,9 +199,9 @@ If setup correctly, the output will look like
     │   │   ├── 1234.png
     │   │   ├── ...
     │   ├── pose/
-    │   │   ├── 0.npy
+    │   │   ├── pose0.npy
     │   │   ├── ...
-    │   │   ├── 1234.npy
+    │   │   ├── pose1234.npy
     │   │   ├── ...
     │   │   └──
     ```
@@ -186,7 +215,7 @@ If setup correctly, the output will look like
     ```
 4. Train:
     ```
-    python train_net.py --cfg_file configs/linemod.yaml train.dataset CustomTrain test.dataset CustomTrain model mycat train.batch_size 4
+    python train_net.py --cfg_file configs/custom.yaml train.batch_size 4
     ```
 5. Watch the training curve:
     ```
@@ -194,14 +223,14 @@ If setup correctly, the output will look like
     ```
 6. Visualize:
     ```
-    python run.py --type visualize --cfg_file configs/linemod.yaml train.dataset CustomTrain test.dataset CustomTrain model mycat
+    python run.py --type visualize --cfg_file configs/custom.yaml
     ```
 7. Test:
     ```
-    python run.py --type evaluate --cfg_file configs/linemod.yaml train.dataset CustomTrain test.dataset CustomTrain model mycat
+    python run.py --type evaluate --cfg_file configs/custom.yaml
     ```
 
-An example dataset can be downloaded at [here](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/EXkFCvV2J0BBtlwKSyC20b4BdyPm3LTYqIZ-vnVTGJMGtg?e=WC2Cgm).
+An example dataset can be downloaded at [here](https://zjueducn-my.sharepoint.com/:u:/g/personal/pengsida_zju_edu_cn/Ec6Hd9j7z4lCiwDhqIwDcScBGPw2rsbn6FJh1C2FwbPJTw?e=xcKGAw).
 
 ## Citation
 
@@ -214,4 +243,24 @@ If you find this code useful for your research, please use the following BibTeX 
   booktitle={CVPR},
   year={2019}
 }
+```
+
+## Acknowledgement
+
+This work is affliated with ZJU-SenseTime Joint Lab of 3D Vision, and its intellectual property belongs to SenseTime Group Ltd.
+
+```
+Copyright SenseTime. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
