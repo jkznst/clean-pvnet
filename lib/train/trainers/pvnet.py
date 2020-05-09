@@ -20,7 +20,7 @@ class NetworkWrapper(nn.Module):
 
         if 'pose_test' in batch.keys():
             return output, loss, {}, {}
-
+        # mask shape is (N, H, W), weight shape is (N, 1, H, W)
         weight = batch['mask'][:, None].float()
         vote_loss = self.vote_crit(output['vertex'] * weight, batch['vertex'] * weight, reduction='sum')
         vote_loss = vote_loss / weight.sum() / batch['vertex'].size(1)
